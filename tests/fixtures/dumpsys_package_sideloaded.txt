@@ -1,0 +1,12 @@
+Packages:
+  Package [com.example.sideloaded] (1234abcd):
+    versionCode=42 minSdk=23 targetSdk=28
+    versionName=1.2.3
+    pkgFlags=[ HAS_CODE ALLOW_CLEAR_USER_DATA ALLOW_BACKUP ]
+    firstInstallTime=2026-10-01 10:00:00
+    lastUpdateTime=2024-01-15 08:30:00
+    installerPackageName=null
+    runtime permissions:
+      android.permission.READ_SMS: granted=true
+      android.permission.SYSTEM_ALERT_WINDOW: granted=true
+      android.permission.CAMERA: granted=false

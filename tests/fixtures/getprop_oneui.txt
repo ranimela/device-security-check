@@ -1,0 +1,8 @@
+[ro.product.model]: [SM-S928B]
+[ro.product.manufacturer]: [samsung]
+[ro.build.version.release]: [14]
+[ro.build.version.sdk]: [34]
+[ro.build.version.security_patch]: [2026-10-01]
+[ro.boot.verifiedbootstate]: [green]
+[ro.boot.flash.locked]: [1]
+[ro.crypto.state]: [encrypted]

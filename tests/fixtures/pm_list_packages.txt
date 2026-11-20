@@ -1,0 +1,3 @@
+package:/data/app/~~abc==/com.example.sideloaded-1/base.apk=com.example.sideloaded installer=null uid:10321
+package:/data/app/~~def==/com.whatsapp-2/base.apk=com.whatsapp installer=com.android.vending uid:10215
+package:/system/priv-app/Settings/Settings.apk=com.android.settings installer=null uid:1000
