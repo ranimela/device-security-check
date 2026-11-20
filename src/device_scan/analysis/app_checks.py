@@ -11,6 +11,8 @@ TRUSTED_INSTALLERS = frozenset(
     {
         "com.android.vending",
         "com.sec.android.app.samsungapps",
+        "com.samsung.android.app.updatecenter",
+        "com.sec.android.easyMover",
     }
 )
 

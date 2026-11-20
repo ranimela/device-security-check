@@ -10,6 +10,7 @@ from pathlib import Path
 from device_scan.ingestion.adb_client import AdbClient, AdbError, hash_serial
 from device_scan.ingestion.parsers import (
     parse_component_packages,
+    parse_device_admins,
     parse_device_info,
     parse_dumpsys_package,
     parse_getprop,
@@ -139,7 +140,7 @@ def collect_snapshot(
         "dumpsys device_policy",
         errors,
     )
-    device_admin_pkgs = parse_component_packages(admin_raw)
+    device_admin_pkgs = parse_device_admins(admin_raw)
     default_sms_pkg = secure_settings.get("sms_default_application", "").strip()
 
     pm_cmd = "pm list packages -f -i -U --user 0"

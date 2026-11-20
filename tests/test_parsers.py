@@ -5,7 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 
 from device_scan.ingestion.parsers import (
+    parse_active_vpn,
     parse_component_packages,
+    parse_device_admins,
     parse_device_info,
     parse_dumpsys_package,
     parse_getprop,
@@ -92,6 +94,7 @@ def test_parse_posture_signals_and_components() -> None:
         lock_settings_output="false\n",
     )
     assert posture.adb_enabled is True
+    assert posture.screen_lock_enabled == "true"
     assert posture.play_protect_enabled == "false"
     assert posture.encryption_state == "encrypted"
     assert posture.http_proxy == "192.168.1.50:8080"
@@ -101,3 +104,24 @@ def test_parse_posture_signals_and_components() -> None:
     assert parse_component_packages(s_settings["enabled_accessibility_services"]) == {
         "com.example.sideloaded"
     }
+
+
+def test_parse_device_admins_ignores_unrelated_policy_packages() -> None:
+    """parse_device_admins only extracts packages inside Enabled Device Admins."""
+    sample = (
+        "Current Device Policy Manager state:\n"
+        "  User 0\n"
+        "    Enabled Device Admins (User 0, owner=false):\n"
+        "      com.example.mdm/.AdminReceiver:\n"
+        "        uid=10200\n"
+        "    Password Policy:\n"
+        "      com.dropbox.android/something\n"
+        "      com.anthropic.claude/something\n"
+    )
+    assert parse_device_admins(sample) == {"com.example.mdm"}
+
+
+def test_parse_active_vpn_ignores_iso_timestamps() -> None:
+    """parse_active_vpn does not misread ISO timestamps like 51.595Z as a package."""
+    sample = "2026-11-20T13:46:51.595Z VPN state=DISCONNECTED\n"
+    assert parse_active_vpn(sample) is None

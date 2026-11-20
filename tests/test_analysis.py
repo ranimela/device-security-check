@@ -160,3 +160,32 @@ def test_app_sideloaded_trojan_combo_and_json_roundtrip(tmp_path: Path) -> None:
     assert "APP_LOW_TARGET_SDK" in check_ids
     assert "APP_STALE_UNUPDATED" in check_ids
     assert all("com.whatsapp" not in f.target_id for f in result.findings)
+
+
+def test_samsung_update_center_and_smart_switch_are_trusted() -> None:
+    """Samsung Update Center and Smart Switch are not flagged as sideloaded."""
+    base = _baseline_snapshot()
+    samsung_pkg = PackageRecord(
+        package_name="com.sec.android.app.clockpackage",
+        user_id=0,
+        version_name="12.6",
+        version_code=126,
+        installer_package="com.samsung.android.app.updatecenter",
+        is_system_app=False,
+        target_sdk=34,
+        min_sdk=28,
+        first_install_at="2026-01-01 00:00:00",
+        last_updated_at="2026-10-01 00:00:00",
+    )
+    snapshot = DeviceSnapshot(
+        schema_version=base.schema_version,
+        scan_id=base.scan_id,
+        captured_at=base.captured_at,
+        completeness="complete",
+        device=base.device,
+        posture=base.posture,
+        users=base.users,
+        packages=(samsung_pkg,),
+    )
+    result, _ = analyze_snapshot(snapshot, reference_date=date(2026, 11, 20))
+    assert len(result.findings) == 0

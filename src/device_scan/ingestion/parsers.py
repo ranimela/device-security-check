@@ -109,6 +109,34 @@ def parse_component_packages(raw_value: str) -> set[str]:
     return packages
 
 
+def parse_device_admins(dumpsys_device_policy: str) -> set[str]:
+    """Extract only active Device Admin package names from ``dumpsys device_policy``."""
+    admins: set[str] = set()
+    in_admins_section = False
+    section_indent = 0
+    pkg_re = re.compile(r"([a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)/")
+
+    for raw_line in dumpsys_device_policy.splitlines():
+        stripped = raw_line.strip()
+        if not stripped:
+            continue
+        indent = len(raw_line) - len(raw_line.lstrip(" "))
+
+        if "Enabled Device Admins" in stripped:
+            in_admins_section = True
+            section_indent = indent
+            continue
+
+        if in_admins_section:
+            if indent <= section_indent and not stripped.startswith(("ActiveAdmin", "mAdmin")):
+                in_admins_section = False
+                continue
+            for match in pkg_re.finditer(stripped):
+                admins.add(match.group(1))
+
+    return admins
+
+
 def parse_user_ca_certs(output: str) -> tuple[UserCaCert, ...]:
     """Parse ``ls`` output of ``/data/misc/user/0/cacerts-added``."""
     certs: list[UserCaCert] = []
@@ -122,12 +150,19 @@ def parse_user_ca_certs(output: str) -> tuple[UserCaCert, ...]:
 
 def parse_active_vpn(dumpsys_connectivity: str) -> str | None:
     """Extract an active VPN package or interface indicator from ``dumpsys connectivity``."""
+    pkg_re = re.compile(
+        r"(?:package=|OwnerUID=\d+[^a-zA-Z]*)([a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)"
+    )
+    generic_pkg_re = re.compile(r"\b([a-zA-Z][a-zA-Z0-9_]*(?:\.[a-zA-Z0-9_]+)+)\b")
     for line in dumpsys_connectivity.splitlines():
         if "VPN" in line or "tun0" in line:
-            pkg_match = re.search(r"([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)+)", line)
+            pkg_match = pkg_re.search(line)
             if pkg_match:
                 return pkg_match.group(1)
-            if "CONNECTED" in line and "VPN" in line:
+            if re.search(r"\bCONNECTED\b", line) and "VPN" in line:
+                for cand in generic_pkg_re.findall(line):
+                    if not cand.startswith(("android.net", "com.android.server")):
+                        return cand
                 return "unknown-vpn"
     return None
 
@@ -170,10 +205,10 @@ def parse_posture_signals(
     )
 
     screen_lock: TriStateBool = "unknown"
-    lower_lock = lock_settings_output.lower()
-    if "password" in lower_lock or "pin" in lower_lock or "pattern" in lower_lock:
+    lower_lock = lock_settings_output.strip().lower()
+    if lower_lock == "false" or any(k in lower_lock for k in ("password", "pin", "pattern")):
         screen_lock = "true"
-    elif "none" in lower_lock or "false" in lower_lock:
+    elif lower_lock == "true" or "none" in lower_lock:
         screen_lock = "false"
 
     proxy_raw = global_settings.get("http_proxy", "").strip()
